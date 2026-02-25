@@ -69,7 +69,7 @@ const Register = () => {
                         letterSpacing: '-0.06em'
                     }}
                 >
-                    Blogger.
+                    ConnectX
                 </motion.h1>
                 <p style={{ color: 'var(--text-secondary)', marginBottom: '32px', fontWeight: '500' }}>
                     Join the community of stories.

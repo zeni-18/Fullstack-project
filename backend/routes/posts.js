@@ -72,14 +72,20 @@ router.post('/', protect, upload.single('image'), async (req, res) => {
         console.log('Body:', req.body);
         console.log('File:', req.file);
 
-        const { caption, tags, location } = req.body;
+        const { caption, tags, location, mediaType } = req.body;
         if (!req.file) {
             console.log('Upload failed: No file received');
-            return res.status(400).json({ message: 'Please upload an image' });
+            return res.status(400).json({ message: 'Please upload an image or video' });
         }
+
+        // Detect media type from file if not provided
+        const detectedMediaType = req.file.mimetype.startsWith('video/') ? 'video' : 'image';
+
         const post = await Post.create({
             caption,
             imageUrl: `/uploads/${req.file.filename}`,
+            mediaUrl: `/uploads/${req.file.filename}`,
+            mediaType: mediaType || detectedMediaType,
             author: req.user._id,
             tags: tags ? tags.split(',').map(tag => tag.trim()) : [],
             location

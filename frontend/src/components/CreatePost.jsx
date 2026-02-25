@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Image as ImageIcon, MapPin, Send } from 'lucide-react';
+import { X, Image as ImageIcon, Video as VideoIcon, MapPin, Send } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import { useAuth } from '../context/AuthContext';
@@ -7,35 +7,43 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 const CreatePost = ({ onClose, onPostCreated }) => {
     const { user } = useAuth();
-    const [image, setImage] = useState(null);
+    const [media, setMedia] = useState(null);
     const [preview, setPreview] = useState('');
+    const [mediaType, setMediaType] = useState('image');
     const [caption, setCaption] = useState('');
     const [location, setLocation] = useState('');
     const [loading, setLoading] = useState(false);
 
-    const handleImageChange = (e) => {
+    const handleMediaChange = (e) => {
         const file = e.target.files[0];
         if (file) {
-            setImage(file);
+            setMedia(file);
             setPreview(URL.createObjectURL(file));
+            // Detect if it's a video or image
+            if (file.type.startsWith('video/')) {
+                setMediaType('video');
+            } else {
+                setMediaType('image');
+            }
         }
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!image) return toast.error('Please select an image');
+        if (!media) return toast.error('Please select an image or video');
 
         setLoading(true);
         const formData = new FormData();
-        formData.append('image', image);
+        formData.append('image', media);
         formData.append('caption', caption);
         formData.append('location', location);
+        formData.append('mediaType', mediaType);
 
         try {
             const res = await axios.post('/posts', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
-            toast.success('Post created successfully!');
+            toast.success(`${mediaType === 'video' ? 'Video' : 'Post'} created successfully!`);
             onPostCreated(res.data);
             onClose();
         } catch (err) {
@@ -82,12 +90,12 @@ const CreatePost = ({ onClose, onPostCreated }) => {
                     <h3 style={{ fontSize: '1.1rem', fontWeight: '700' }}>Create New Post</h3>
                     <button
                         onClick={handleSubmit}
-                        disabled={loading || !image}
+                        disabled={loading || !media}
                         style={{
                             color: 'var(--primary)',
                             fontWeight: '800',
                             fontSize: '0.95rem',
-                            opacity: (loading || !image) ? 0.5 : 1
+                            opacity: (loading || !media) ? 0.5 : 1
                         }}
                     >
                         {loading ? <div className="spinner" style={{ width: '16px', height: '16px' }}></div> : 'Share'}
@@ -106,15 +114,23 @@ const CreatePost = ({ onClose, onPostCreated }) => {
                         minHeight: '400px'
                     }}>
                         {preview ? (
-                            <img src={preview} style={{ width: '100%', height: '100%', objectFit: 'contain' }} alt="Preview" />
+                            mediaType === 'video' ? (
+                                <video src={preview} controls style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                            ) : (
+                                <img src={preview} style={{ width: '100%', height: '100%', objectFit: 'contain' }} alt="Preview" />
+                            )
                         ) : (
                             <div className="flex column flex-center" style={{ gap: '16px', color: 'var(--text-secondary)' }}>
-                                <ImageIcon size={64} strokeWidth={1} />
-                                <p style={{ fontWeight: '500' }}>Select an image to start</p>
+                                <div style={{ display: 'flex', gap: '16px' }}>
+                                    <ImageIcon size={48} strokeWidth={1} />
+                                    <VideoIcon size={48} strokeWidth={1} />
+                                </div>
+                                <p style={{ fontWeight: '500' }}>Select an image or video to start</p>
                                 <label className="btn-primary" style={{ cursor: 'pointer', padding: '10px 20px' }}>
                                     Select from computer
-                                    <input type="file" hidden accept="image/*" onChange={handleImageChange} />
+                                    <input type="file" hidden accept="image/*,video/*" onChange={handleMediaChange} />
                                 </label>
+                                <p style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>Max 100MB • MP4, WebM, AVI, JPG, PNG</p>
                             </div>
                         )}
                     </div>

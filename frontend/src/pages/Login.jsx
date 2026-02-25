@@ -59,7 +59,7 @@ const Login = () => {
                         letterSpacing: '-0.06em'
                     }}
                 >
-                    Blogger.
+                    ConnectX
                 </motion.h1>
                 <p style={{ color: 'var(--text-secondary)', marginBottom: '40px', fontWeight: '500' }}>
                     Connect with the world's creators.

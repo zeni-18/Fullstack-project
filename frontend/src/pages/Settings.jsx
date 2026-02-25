@@ -49,14 +49,14 @@ const Settings = () => {
     return (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="App">
             <Navbar />
-            <div className="container" style={{ paddingTop: '40px', maxWidth: '935px' }}>
-                <div className="card flex" style={{ padding: 0, minHeight: '70vh', overflow: 'hidden', boxShadow: 'var(--shadow-lg)' }}>
-                    <div style={{ width: '280px', borderRight: '1px solid var(--border)', backgroundColor: 'var(--card-bg)' }}>
+            <div className="container" style={{ padding: '40px', paddingLeft: '40px', paddingRight: '40px', maxWidth: '1200px', height: 'calc(100vh - 80px)', margin: '0 auto' }}>
+                <div className="card flex" style={{ padding: 0, height: '100%', overflow: 'hidden', boxShadow: 'var(--shadow-lg)' }}>
+                    <div style={{ width: '280px', borderRight: '1px solid var(--border)', backgroundColor: 'var(--card-bg)', display: 'flex', flexDirection: 'column' }}>
                         <div style={{ padding: '32px 24px' }}>
                             <h2 style={{ fontSize: '1.5rem', fontWeight: '800', marginBottom: '4px' }}>Settings</h2>
                             <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Manage your account preferences</p>
                         </div>
-                        <div className="flex column">
+                        <div className="flex column" style={{ flex: 1 }}>
                             {menuItems.map(item => (
                                 <button
                                     key={item.id}
@@ -83,7 +83,7 @@ const Settings = () => {
                                     {activeSection === item.id && <ChevronRight size={16} />}
                                 </button>
                             ))}
-                            <div style={{ marginTop: '20px', padding: '0 24px' }}>
+                            <div style={{ marginTop: 'auto', padding: '0 24px', paddingBottom: '24px' }}>
                                 <button
                                     onClick={() => { logout(); navigate('/login'); }}
                                     className="flex gap-sm"
@@ -102,7 +102,7 @@ const Settings = () => {
                         </div>
                     </div>
 
-                    <div style={{ flex: 1, padding: '48px 60px', backgroundColor: 'var(--card-bg)' }}>
+                    <div style={{ flex: 1, padding: '40px', backgroundColor: 'var(--card-bg)', overflowY: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         {activeSection === 'password' ? (
                             <motion.form
                                 initial={{ opacity: 0, x: 20 }}
@@ -153,6 +153,68 @@ const Settings = () => {
                                     {loading ? <div className="spinner" style={{ borderTopColor: 'white' }}></div> : 'Update Password'}
                                 </button>
                             </motion.form>
+                        ) : activeSection === 'profile' ? (
+                            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} style={{ maxWidth: '600px', margin: '0 auto', width: '100%' }}>
+                                <h2 style={{ marginBottom: '32px', fontWeight: '700', fontSize: '1.75rem', textAlign: 'center' }}>Edit Profile</h2>
+
+                                {/* Profile Picture Upload */}
+                                <div className="card" style={{ padding: '32px', marginBottom: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                    <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '20px', textAlign: 'center' }}>Profile Picture</h3>
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'var(--spacing-lg)', textAlign: 'center' }}>
+                                        <div style={{
+                                            width: '120px',
+                                            height: '120px',
+                                            borderRadius: 'var(--radius-lg)',
+                                            background: 'var(--gradient-primary)',
+                                            padding: '4px',
+                                            flexShrink: 0
+                                        }}>
+                                            <img
+                                                src={user?.profileImage || 'https://res.cloudinary.com/demo/image/upload/d_avatar.png/v1/user_profile_default.png'}
+                                                alt={user?.username}
+                                                style={{
+                                                    width: '100%',
+                                                    height: '100%',
+                                                    borderRadius: 'var(--radius-md)',
+                                                    objectFit: 'cover'
+                                                }}
+                                            />
+                                        </div>
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'var(--spacing-md)' }}>
+                                            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: 0 }}>
+                                                Upload a new profile picture. Recommended size: 400x400px
+                                            </p>
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={async (e) => {
+                                                    const file = e.target.files[0];
+                                                    if (!file) return;
+                                                    setLoading(true);
+                                                    try {
+                                                        const formData = new FormData();
+                                                        formData.append('image', file);
+                                                        const res = await axios.put('/users/profile', formData, {
+                                                            headers: { 'Content-Type': 'multipart/form-data' }
+                                                        });
+                                                        toast.success('Profile picture updated successfully');
+                                                        window.location.reload();
+                                                    } catch (err) {
+                                                        toast.error(err.response?.data?.message || 'Error uploading image');
+                                                    } finally {
+                                                        setLoading(false);
+                                                    }
+                                                }}
+                                                style={{ display: 'none' }}
+                                                id="profile-picture-upload"
+                                            />
+                                            <label htmlFor="profile-picture-upload" className="btn-primary" style={{ cursor: 'pointer', display: 'inline-flex' }}>
+                                                {loading ? <div className="spinner" style={{ borderTopColor: 'white' }}></div> : 'Choose Image'}
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </motion.div>
                         ) : (
                             <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
                                 <div className="flex-between" style={{ marginBottom: '32px' }}>

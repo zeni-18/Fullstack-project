@@ -1,7 +1,7 @@
 {
-  "name": "blog-platform",
+  "name": "connectx-platform",
   "version": "1.0.0",
-  "description": "Full-stack blog platform with authentication and social features",
+  "description": "ConnectX - Full-stack social platform with authentication and creative sharing features",
   "main": "server.js",
   "scripts": {
     "start": "node backend/server.js",

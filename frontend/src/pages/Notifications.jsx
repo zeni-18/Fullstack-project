@@ -13,7 +13,7 @@ const Notifications = () => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        document.title = 'Notifications • Blogger';
+        document.title = 'Notifications • ConnectX';
         const fetchNotifications = async () => {
             try {
                 const res = await axios.get('/notifications');
@@ -50,7 +50,7 @@ const Notifications = () => {
     return (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="App">
             <Navbar />
-            <div className="container" style={{ paddingTop: '30px', maxWidth: '600px' }}>
+            <div className="container" style={{ padding: '40px', paddingLeft: '40px', paddingRight: '40px', maxWidth: '600px', margin: '0 auto' }}>
                 <div className="flex-between" style={{ marginBottom: '32px' }}>
                     <h2 style={{ fontSize: '1.75rem', fontWeight: '800' }}>Notifications</h2>
                     <Bell size={24} color="var(--text-secondary)" />

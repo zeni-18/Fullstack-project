@@ -104,7 +104,7 @@ const Sidebar = () => {
                     About • Help • Press • API • Jobs • Privacy • Terms • Locations • Language
                 </p>
                 <p style={{ marginTop: '16px', textTransform: 'uppercase', fontWeight: '600', letterSpacing: '0.05em' }}>
-                    © 2026 Blogger
+                    © 2026 ConnectX
                 </p>
             </div>
         </div>

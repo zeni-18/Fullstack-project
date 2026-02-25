@@ -3,10 +3,11 @@ import { useParams, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
-import { Settings, Grid, Bookmark, Tag, Heart, MessageCircle } from 'lucide-react';
+import { Settings, Grid, Bookmark, Tag, Heart, MessageCircle, Play } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { motion, AnimatePresence } from 'framer-motion';
 import EditProfile from '../components/EditProfile';
+import PostModal from '../components/PostModal';
 
 const Profile = () => {
     const { username } = useParams();
@@ -20,6 +21,7 @@ const Profile = () => {
     const [loading, setLoading] = useState(true);
     const [isFollowing, setIsFollowing] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [selectedPost, setSelectedPost] = useState(null);
 
     useEffect(() => {
         const fetchProfileData = async () => {
@@ -51,7 +53,7 @@ const Profile = () => {
 
     useEffect(() => {
         if (profile) {
-            document.title = `@${profile.username} • Blogger`;
+            document.title = `@${profile.username} • ConnectX`;
         }
     }, [profile]);
 
@@ -93,7 +95,7 @@ const Profile = () => {
     return (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="App">
             <Navbar />
-            <div className="container" style={{ paddingTop: '30px' }}>
+            <div className="container" style={{ padding: '40px', paddingLeft: '40px', paddingRight: '40px', maxWidth: '1200px', margin: '0 auto' }}>
                 <div className="flex" style={{ gap: 'var(--spacing-xl)', marginBottom: 'var(--spacing-xl)', alignItems: 'flex-start' }}>
                     <div style={{
                         width: '150px',
@@ -195,6 +197,7 @@ const Profile = () => {
                                     animate={{ opacity: 1, scale: 1 }}
                                     exit={{ opacity: 0, scale: 0.9 }}
                                     whileHover={{ scale: 1.02 }}
+                                    onClick={() => setSelectedPost(post)}
                                     style={{
                                         aspectRatio: '1/1',
                                         position: 'relative',
@@ -204,11 +207,31 @@ const Profile = () => {
                                         backgroundColor: 'var(--border)'
                                     }}
                                 >
-                                    <img
-                                        src={post.imageUrl}
-                                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                                        alt="grid-post"
-                                    />
+                                    {post.mediaType === 'video' || post.imageUrl?.match(/\.(mp4|webm|avi|mov|mkv)$/i) ? (
+                                        <>
+                                            <video
+                                                src={post.imageUrl}
+                                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                            />
+                                            <div style={{
+                                                position: 'absolute',
+                                                top: '8px',
+                                                right: '8px',
+                                                background: 'rgba(0,0,0,0.7)',
+                                                borderRadius: 'var(--radius-sm)',
+                                                padding: '4px 8px',
+                                                backdropFilter: 'blur(8px)'
+                                            }}>
+                                                <Play size={16} color="white" fill="white" />
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <img
+                                            src={post.imageUrl}
+                                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                            alt="grid-post"
+                                        />
+                                    )}
                                     <div className="grid-overlay">
                                         <div className="flex-center" style={{ gap: '20px', color: 'white', fontWeight: '800' }}>
                                             <span className="flex gap-xs" style={{ alignItems: 'center' }}><Heart fill="white" size={20} /> {post.likes?.length || 0}</span>
@@ -235,6 +258,15 @@ const Profile = () => {
                     onProfileUpdated={(updatedUser) => setProfile({ ...profile, ...updatedUser })}
                 />
             )}
+
+            <AnimatePresence>
+                {selectedPost && (
+                    <PostModal
+                        post={selectedPost}
+                        onClose={() => setSelectedPost(null)}
+                    />
+                )}
+            </AnimatePresence>
             <style>{`
                 .grid-overlay {
                     position: absolute;

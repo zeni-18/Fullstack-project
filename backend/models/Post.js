@@ -9,7 +9,20 @@ const postSchema = new mongoose.Schema({
     },
     imageUrl: {
         type: String,
-        required: [true, 'Please add an image']
+        required: [true, 'Please add media']
+    },
+    mediaUrl: {
+        type: String,
+        required: false
+    },
+    mediaType: {
+        type: String,
+        enum: ['image', 'video'],
+        default: 'image'
+    },
+    videoDuration: {
+        type: Number,
+        required: false
     },
     author: {
         type: mongoose.Schema.Types.ObjectId,

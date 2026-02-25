@@ -11,20 +11,21 @@ const storage = multer.diskStorage({
 });
 
 function checkFileType(file, cb) {
-    const filetypes = /jpeg|jpg|png|gif|webp/;
+    // Accept both images and videos
+    const filetypes = /jpeg|jpg|png|gif|webp|mp4|webm|avi|mov|mkv/;
     const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = filetypes.test(file.mimetype);
+    const mimetype = /image\/(jpeg|jpg|png|gif|webp)|video\/(mp4|webm|x-msvideo|quicktime|x-matroska)/.test(file.mimetype);
 
     if (mimetype && extname) {
         return cb(null, true);
     } else {
-        cb('Error: Images Only!');
+        cb('Error: Images and Videos Only! Supported formats: JPG, PNG, GIF, WebP, MP4, WebM, AVI, MOV, MKV');
     }
 }
 
 const upload = multer({
     storage: storage,
-    limits: { fileSize: 20000000 },
+    limits: { fileSize: 100000000 }, // 100MB limit for videos
     fileFilter: function (req, file, cb) {
         checkFileType(file, cb);
     }
