@@ -35,7 +35,7 @@ const userSchema = new mongoose.Schema({
     },
     profileImage: {
         type: String,
-        default: 'https://res.cloudinary.com/demo/image/upload/d_avatar.png/v1/user_profile_default.png'
+        default: 'https://api.dicebear.com/7.x/avataaars/svg?seed=user'
     },
     followers: [{
         type: mongoose.Schema.Types.ObjectId,

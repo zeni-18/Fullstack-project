@@ -48,9 +48,9 @@ const Notifications = () => {
     };
 
     return (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="App">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
             <Navbar />
-            <div className="container" style={{ padding: '40px', paddingLeft: '40px', paddingRight: '40px', maxWidth: '600px', margin: '0 auto' }}>
+            <div className="page-content">
                 <div className="flex-between" style={{ marginBottom: '32px' }}>
                     <h2 style={{ fontSize: '1.75rem', fontWeight: '800' }}>Notifications</h2>
                     <Bell size={24} color="var(--text-secondary)" />
@@ -120,7 +120,7 @@ const Notifications = () => {
                                     </div>
                                 </div>
 
-                                {notif.post && (
+                                {notif.post && notif.post.imageUrl && (
                                     <motion.div whileHover={{ scale: 1.05 }}>
                                         <Link to={`/profile/${currentUser?.username}`}>
                                             <img

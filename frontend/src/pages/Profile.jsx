@@ -8,6 +8,7 @@ import { toast } from 'react-toastify';
 import { motion, AnimatePresence } from 'framer-motion';
 import EditProfile from '../components/EditProfile';
 import PostModal from '../components/PostModal';
+import UserListModal from '../components/UserListModal';
 
 const Profile = () => {
     const { username } = useParams();
@@ -22,6 +23,7 @@ const Profile = () => {
     const [isFollowing, setIsFollowing] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [selectedPost, setSelectedPost] = useState(null);
+    const [userListModal, setUserListModal] = useState({ isOpen: false, title: '', users: [] });
 
     useEffect(() => {
         const fetchProfileData = async () => {
@@ -67,6 +69,19 @@ const Profile = () => {
         }
     };
 
+    const handleOpenUserList = async (type) => {
+        try {
+            const res = await axios.get(`/users/${profile._id}/${type}`);
+            setUserListModal({
+                isOpen: true,
+                title: type === 'followers' ? 'Followers' : 'Following',
+                users: res.data
+            });
+        } catch (err) {
+            toast.error(`Error fetching ${type}`);
+        }
+    };
+
     if (loading) return (
         <>
             <Navbar />
@@ -93,9 +108,9 @@ const Profile = () => {
     ];
 
     return (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="App">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
             <Navbar />
-            <div className="container" style={{ padding: '40px', paddingLeft: '40px', paddingRight: '40px', maxWidth: '1200px', margin: '0 auto' }}>
+            <div className="page-content">
                 <div className="flex" style={{ gap: 'var(--spacing-xl)', marginBottom: 'var(--spacing-xl)', alignItems: 'flex-start' }}>
                     <div style={{
                         width: '150px',
@@ -116,7 +131,7 @@ const Profile = () => {
                                     <button
                                         onClick={() => setIsEditModalOpen(true)}
                                         className="card"
-                                        style={{ padding: '6px 16px', fontWeight: '600', fontSize: '0.9rem' }}
+                                        style={{ color: 'var(--text-main)', padding: '6px 16px', fontWeight: '600', fontSize: '0.9rem' }}
                                     >
                                         Edit Profile
                                     </button>
@@ -124,7 +139,7 @@ const Profile = () => {
                                     <button
                                         onClick={handleFollow}
                                         className={isFollowing ? 'card' : 'btn-primary'}
-                                        style={{ padding: '6px 20px', fontSize: '0.9rem' }}
+                                        style={{ color: isFollowing ? 'var(--text-main)' : 'white', padding: '6px 20px', fontSize: '0.9rem' }}
                                     >
                                         {isFollowing ? 'Following' : 'Follow'}
                                     </button>
@@ -139,8 +154,18 @@ const Profile = () => {
 
                         <div className="flex" style={{ gap: '40px' }}>
                             <span style={{ fontSize: '1.05rem' }}><strong>{posts.length}</strong> posts</span>
-                            <span style={{ fontSize: '1.05rem' }}><strong>{profile.followers.length}</strong> followers</span>
-                            <span style={{ fontSize: '1.05rem' }}><strong>{profile.following.length}</strong> following</span>
+                            <span
+                                onClick={() => handleOpenUserList('followers')}
+                                style={{ fontSize: '1.05rem', cursor: 'pointer' }}
+                            >
+                                <strong>{profile.followers.length}</strong> followers
+                            </span>
+                            <span
+                                onClick={() => handleOpenUserList('following')}
+                                style={{ fontSize: '1.05rem', cursor: 'pointer' }}
+                            >
+                                <strong>{profile.following.length}</strong> following
+                            </span>
                         </div>
 
                         <div style={{ marginTop: '4px' }}>
@@ -207,30 +232,36 @@ const Profile = () => {
                                         backgroundColor: 'var(--border)'
                                     }}
                                 >
-                                    {post.mediaType === 'video' || post.imageUrl?.match(/\.(mp4|webm|avi|mov|mkv)$/i) ? (
-                                        <>
-                                            <video
+                                    {post.imageUrl ? (
+                                        post.mediaType === 'video' || post.imageUrl?.match(/\.(mp4|webm|avi|mov|mkv)$/i) ? (
+                                            <>
+                                                <video
+                                                    src={post.imageUrl}
+                                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                                />
+                                                <div style={{
+                                                    position: 'absolute',
+                                                    top: '8px',
+                                                    right: '8px',
+                                                    background: 'rgba(0,0,0,0.7)',
+                                                    borderRadius: 'var(--radius-sm)',
+                                                    padding: '4px 8px',
+                                                    backdropFilter: 'blur(8px)'
+                                                }}>
+                                                    <Play size={16} color="white" fill="white" />
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <img
                                                 src={post.imageUrl}
                                                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                                alt="grid-post"
                                             />
-                                            <div style={{
-                                                position: 'absolute',
-                                                top: '8px',
-                                                right: '8px',
-                                                background: 'rgba(0,0,0,0.7)',
-                                                borderRadius: 'var(--radius-sm)',
-                                                padding: '4px 8px',
-                                                backdropFilter: 'blur(8px)'
-                                            }}>
-                                                <Play size={16} color="white" fill="white" />
-                                            </div>
-                                        </>
+                                        )
                                     ) : (
-                                        <img
-                                            src={post.imageUrl}
-                                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                                            alt="grid-post"
-                                        />
+                                        <div style={{ width: '100%', height: '100%', background: 'var(--bg-tertiary)', display: 'flex', alignItems: 'center', justify: 'center' }}>
+                                            <Sparkles size={24} color="var(--text-tertiary)" />
+                                        </div>
                                     )}
                                     <div className="grid-overlay">
                                         <div className="flex-center" style={{ gap: '20px', color: 'white', fontWeight: '800' }}>
@@ -264,6 +295,13 @@ const Profile = () => {
                     <PostModal
                         post={selectedPost}
                         onClose={() => setSelectedPost(null)}
+                    />
+                )}
+                {userListModal.isOpen && (
+                    <UserListModal
+                        title={userListModal.title}
+                        users={userListModal.users}
+                        onClose={() => setUserListModal({ ...userListModal, isOpen: false })}
                     />
                 )}
             </AnimatePresence>

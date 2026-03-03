@@ -524,6 +524,35 @@ textarea::placeholder {
   }
 }
 
+/* Page Content Wrapper - Consistent layout for all pages */
+.page-content {
+  max-width: 100%;
+  padding: 32px 40px;
+  width: 100%;
+}
+
+.page-content--narrow {
+  max-width: 800px;
+  padding: 32px 40px;
+  width: 100%;
+}
+
+.page-content--wide {
+  max-width: 100%;
+  padding: 32px 40px;
+  width: 100%;
+}
+
+.page-content-centered {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 32px 20px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 12px;

@@ -47,9 +47,9 @@ const Settings = () => {
     ];
 
     return (
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="App">
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
             <Navbar />
-            <div className="container" style={{ padding: '40px', paddingLeft: '40px', paddingRight: '40px', maxWidth: '1200px', height: 'calc(100vh - 80px)', margin: '0 auto' }}>
+            <div className="page-content" style={{ height: 'calc(100vh - 80px)' }}>
                 <div className="card flex" style={{ padding: 0, height: '100%', overflow: 'hidden', boxShadow: 'var(--shadow-lg)' }}>
                     <div style={{ width: '280px', borderRight: '1px solid var(--border)', backgroundColor: 'var(--card-bg)', display: 'flex', flexDirection: 'column' }}>
                         <div style={{ padding: '32px 24px' }}>
@@ -154,7 +154,7 @@ const Settings = () => {
                                 </button>
                             </motion.form>
                         ) : activeSection === 'profile' ? (
-                            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} style={{ maxWidth: '600px', margin: '0 auto', width: '100%' }}>
+                            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} style={{ maxWidth: '600px', width: '100%' }}>
                                 <h2 style={{ marginBottom: '32px', fontWeight: '700', fontSize: '1.75rem', textAlign: 'center' }}>Edit Profile</h2>
 
                                 {/* Profile Picture Upload */}

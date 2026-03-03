@@ -3,7 +3,7 @@ const router = express.Router();
 const Notification = require('../models/Notification');
 const { protect } = require('../middleware/auth');
 
-// Get unread count
+
 router.get('/unread', protect, async (req, res) => {
     try {
         const count = await Notification.countDocuments({ recipient: req.user._id, isRead: false });
@@ -13,7 +13,7 @@ router.get('/unread', protect, async (req, res) => {
     }
 });
 
-// Get current user's notifications
+
 router.get('/', protect, async (req, res) => {
     try {
         const notifications = await Notification.find({ recipient: req.user._id })
@@ -32,7 +32,7 @@ router.get('/', protect, async (req, res) => {
     }
 });
 
-// Mark all as read
+
 router.put('/read', protect, async (req, res) => {
     try {
         await Notification.updateMany(

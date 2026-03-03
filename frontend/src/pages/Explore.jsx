@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
-import { Heart, MessageCircle, Search as SearchIcon, Sparkles, TrendingUp, Grid3x3, X } from 'lucide-react';
+import { Heart, MessageCircle, Search as SearchIcon, Sparkles, TrendingUp, Grid3x3, X, Play } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Explore = () => {
@@ -63,10 +63,10 @@ const Explore = () => {
         <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="App"
+            className=""
         >
             <Navbar />
-            <div className="container" style={{ maxWidth: '1200px', padding: '40px', paddingLeft: '40px', paddingRight: '40px', margin: '0 auto' }}>
+            <div className="page-content">
                 {/* Header Section */}
                 <motion.div
                     initial={{ y: -20, opacity: 0 }}
@@ -325,15 +325,45 @@ const Explore = () => {
                                         e.currentTarget.style.boxShadow = 'var(--shadow-md)';
                                     }}
                                 >
-                                    <img
-                                        src={post.imageUrl}
-                                        style={{
-                                            width: '100%',
-                                            height: '100%',
-                                            objectFit: 'cover'
-                                        }}
-                                        alt="explore post"
-                                    />
+                                    {post.imageUrl ? (
+                                        post.mediaType === 'video' || post.imageUrl?.match(/\.(mp4|webm|avi|mov|mkv)$/i) ? (
+                                            <>
+                                                <video
+                                                    src={post.imageUrl}
+                                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                                    autoPlay
+                                                    muted
+                                                    loop
+                                                    playsInline
+                                                />
+                                                <div style={{
+                                                    position: 'absolute',
+                                                    top: '8px',
+                                                    right: '8px',
+                                                    background: 'rgba(0,0,0,0.7)',
+                                                    borderRadius: 'var(--radius-sm)',
+                                                    padding: '4px 8px',
+                                                    backdropFilter: 'blur(8px)'
+                                                }}>
+                                                    <Play size={16} color="white" fill="white" />
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <img
+                                                src={post.imageUrl}
+                                                style={{
+                                                    width: '100%',
+                                                    height: '100%',
+                                                    objectFit: 'cover'
+                                                }}
+                                                alt="explore post"
+                                            />
+                                        )
+                                    ) : (
+                                        <div style={{ width: '100%', height: '100%', background: 'var(--bg-tertiary)', display: 'flex', alignItems: 'center', justify: 'center' }}>
+                                            <Sparkles size={24} color="var(--text-tertiary)" />
+                                        </div>
+                                    )}
                                     <div className="explore-overlay">
                                         <div className="pill-container" style={{
                                             color: 'white',

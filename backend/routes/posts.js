@@ -6,12 +6,20 @@ const User = require('../models/User');
 const { protect } = require('../middleware/auth');
 const upload = require('../middleware/upload');
 
-// Feed route
+
 router.get('/feed', protect, async (req, res) => {
     try {
-        const { page = 1, limit = 10 } = req.query;
+        const { page = 1, limit = 10, tab = 'foryou' } = req.query;
         const following = req.user.following || [];
-        const authorIds = [...following, req.user._id];
+
+        // Filter based on tab
+        let authorIds = [];
+        if (tab === 'following') {
+            authorIds = [...following];
+        } else {
+            // 'foryou' - default logic (following + self)
+            authorIds = [...following, req.user._id];
+        }
 
         const posts = await Post.find({ author: { $in: authorIds } })
             .populate('author', 'username profileImage')
@@ -30,7 +38,7 @@ router.get('/feed', protect, async (req, res) => {
     }
 });
 
-// Explore route
+
 router.get('/explore', async (req, res) => {
     try {
         const posts = await Post.find()
@@ -48,7 +56,7 @@ router.get('/explore', async (req, res) => {
     }
 });
 
-// Search posts
+
 router.get('/search', async (req, res) => {
     try {
         const { tag } = req.query;
@@ -57,6 +65,10 @@ router.get('/search', async (req, res) => {
             tags: { $regex: tag, $options: 'i' }
         })
             .populate('author', 'username profileImage')
+            .populate({
+                path: 'comments',
+                populate: { path: 'user', select: 'username profileImage' }
+            })
             .limit(20);
         res.json(posts || []);
     } catch (error) {
@@ -65,7 +77,7 @@ router.get('/search', async (req, res) => {
     }
 });
 
-// Create post
+
 router.post('/', protect, upload.single('image'), async (req, res) => {
     try {
         console.log('Post creation request received');
@@ -78,7 +90,7 @@ router.post('/', protect, upload.single('image'), async (req, res) => {
             return res.status(400).json({ message: 'Please upload an image or video' });
         }
 
-        // Detect media type from file if not provided
+
         const detectedMediaType = req.file.mimetype.startsWith('video/') ? 'video' : 'image';
 
         const post = await Post.create({
@@ -97,7 +109,7 @@ router.post('/', protect, upload.single('image'), async (req, res) => {
     }
 });
 
-// Specific parameterized routes below
+
 router.post('/:id/comment', protect, async (req, res) => {
     try {
         const { text } = req.body;

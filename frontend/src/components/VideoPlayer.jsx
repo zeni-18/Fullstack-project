@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Play, Pause, Volume2, VolumeX, Maximize } from 'lucide-react';
 
-const VideoPlayer = ({ src, poster, className = '' }) => {
+const VideoPlayer = ({ src, poster, className = '', autoPlay = false, forcePause = false }) => {
     const videoRef = useRef(null);
     const [isPlaying, setIsPlaying] = useState(false);
     const [isMuted, setIsMuted] = useState(false);
@@ -38,6 +38,20 @@ const VideoPlayer = ({ src, poster, className = '' }) => {
             video.removeEventListener('ended', handleEnded);
         };
     }, []);
+
+    useEffect(() => {
+        if (forcePause && isPlaying) {
+            videoRef.current.pause();
+            setIsPlaying(false);
+        }
+    }, [forcePause, isPlaying]);
+
+    useEffect(() => {
+        if (autoPlay && videoRef.current) {
+            videoRef.current.play().catch(console.error);
+            setIsPlaying(true);
+        }
+    }, [autoPlay]);
 
     const togglePlay = () => {
         const video = videoRef.current;

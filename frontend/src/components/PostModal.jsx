@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Heart, MessageCircle, Bookmark, Sparkles, Send } from 'lucide-react';
+import { X, Heart, MessageCircle, Bookmark, Sparkles, Send, Share2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatDistanceToNow } from 'date-fns';
 import { useAuth } from '../context/AuthContext';
@@ -46,6 +46,27 @@ const PostModal = ({ post, onClose }) => {
             setCommentText('');
         } catch (err) {
             toast.error('Error adding comment');
+        }
+    };
+
+    const handleShare = async () => {
+        const shareData = {
+            title: 'ConnectX Post',
+            text: post.caption || 'Check out this post on ConnectX!',
+            url: window.location.origin
+        };
+
+        if (navigator.share) {
+            try {
+                await navigator.share(shareData);
+            } catch (err) {
+                if (err.name !== 'AbortError') {
+                    toast.error('Error sharing post');
+                }
+            }
+        } else {
+            const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareData.text + ' ' + shareData.url)}`;
+            window.open(whatsappUrl, '_blank');
         }
     };
 
@@ -203,6 +224,20 @@ const PostModal = ({ post, onClose }) => {
                             }}
                         >
                             <Bookmark size={20} fill={isSaved ? 'var(--primary)' : 'none'} strokeWidth={isSaved ? 0 : 2} />
+                        </motion.button>
+
+                        <motion.button
+                            whileTap={{ scale: 0.85 }}
+                            onClick={handleShare}
+                            className="glass"
+                            style={{
+                                padding: 'var(--spacing-md)',
+                                borderRadius: 'var(--radius-full)',
+                                color: 'var(--text-main)',
+                                backdropFilter: 'var(--glass-blur)'
+                            }}
+                        >
+                            <Share2 size={20} />
                         </motion.button>
                     </div>
                 </div>

@@ -10,8 +10,8 @@ connectDB();
 const app = express();
 
 app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
@@ -19,6 +19,8 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/posts', require('./routes/posts'));
 app.use('/api/users', require('./routes/users'));
 app.use('/api/notifications', require('./routes/notifications'));
+app.use('/api/messages', require('./routes/messages'));
+app.use('/api/ai', require('./routes/ai'));
 
 app.get('/', (req, res) => {
     res.json({ message: 'Blog Platform API' });
@@ -45,6 +47,34 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
+const http = require('http');
+const { Server } = require('socket.io');
+
+const server = http.createServer(app);
+const io = new Server(server, {
+    cors: {
+        origin: '*',
+        methods: ['GET', 'POST']
+    }
+});
+
+io.on('connection', (socket) => {
+    socket.on('setup', (userId) => {
+        socket.join(userId);
+        socket.emit('connected');
+    });
+
+    socket.on('send_message', ({ recipientId, message }) => {
+        socket.to(recipientId).emit('receive_message', message);
+    });
+
+    socket.on('message_reaction', ({ recipientId, messageId, reactions }) => {
+        socket.to(recipientId).emit('receive_reaction', { messageId, reactions });
+    });
+
+    socket.on('disconnect', () => { });
+});
+
+server.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });

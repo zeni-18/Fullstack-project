@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Image as ImageIcon, Video as VideoIcon, MapPin, Send } from 'lucide-react';
+import { X, Image as ImageIcon, Video as VideoIcon, MapPin, Send, Sparkles } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import { useAuth } from '../context/AuthContext';
@@ -130,7 +130,7 @@ const CreatePost = ({ onClose, onPostCreated }) => {
                                     Select from computer
                                     <input type="file" hidden accept="image/*,video/*" onChange={handleMediaChange} />
                                 </label>
-                                <p style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>Max 100MB • MP4, WebM, AVI, JPG, PNG</p>
+                                <p style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>Max 1GB • MP4, WebM, AVI, JPG, PNG</p>
                             </div>
                         )}
                     </div>
@@ -145,20 +145,77 @@ const CreatePost = ({ onClose, onPostCreated }) => {
                             <span style={{ fontWeight: '700', fontSize: '0.9rem' }}>{user?.username}</span>
                         </div>
 
-                        <textarea
-                            placeholder="Write a caption..."
-                            value={caption}
-                            onChange={(e) => setCaption(e.target.value)}
-                            style={{
-                                width: '100%',
-                                border: 'none',
-                                resize: 'none',
-                                padding: 0,
-                                fontSize: '1rem',
-                                height: '120px',
-                                background: 'transparent'
-                            }}
-                        />
+                        <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            <textarea
+                                placeholder="Write a caption..."
+                                value={caption}
+                                onChange={(e) => setCaption(e.target.value)}
+                                style={{
+                                    width: '100%',
+                                    border: 'none',
+                                    resize: 'none',
+                                    padding: 0,
+                                    fontSize: '1rem',
+                                    height: '120px',
+                                    background: 'transparent',
+                                    color: 'var(--text-main)'
+                                }}
+                            />
+                            <div className="flex" style={{ justifyContent: 'flex-end' }}>
+                                <motion.button
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    onClick={async () => {
+                                        if (!caption && !media) return toast.info('Add some context or select media for better AI results');
+                                        const loadingToast = toast.loading('Gemini is thinking...');
+                                        try {
+                                            const payload = {
+                                                prompt: `Write a creative and engaging caption for a social media post. ${caption ? `Context: ${caption}` : ''} ${mediaType ? `Media type: ${mediaType}` : ''}. Keep it concise and use relevant hashtags.`
+                                            };
+
+                                            if (mediaType === 'image' && media) {
+                                                // Convert file to base64 for vision
+                                                const reader = new FileReader();
+                                                reader.readAsDataURL(media);
+                                                reader.onloadend = async () => {
+                                                    const base64data = reader.result;
+                                                    try {
+                                                        const res = await axios.post('/ai/generate-post', {
+                                                            ...payload,
+                                                            image: base64data
+                                                        });
+                                                        setCaption(res.data.content);
+                                                        toast.update(loadingToast, { render: 'AI Caption generated!', type: 'success', isLoading: false, autoClose: 3000 });
+                                                    } catch (err) {
+                                                        toast.update(loadingToast, { render: 'AI Assist failed.', type: 'error', isLoading: false, autoClose: 3000 });
+                                                    }
+                                                };
+                                            } else {
+                                                const res = await axios.post('/ai/generate-post', payload);
+                                                setCaption(res.data.content);
+                                                toast.update(loadingToast, { render: 'AI Caption generated!', type: 'success', isLoading: false, autoClose: 3000 });
+                                            }
+                                        } catch (err) {
+                                            toast.update(loadingToast, { render: 'AI Assist failed.', type: 'error', isLoading: false, autoClose: 3000 });
+                                        }
+                                    }}
+                                    className="glass"
+                                    style={{
+                                        padding: '6px 12px',
+                                        borderRadius: 'var(--radius-sm)',
+                                        fontSize: '0.8rem',
+                                        fontWeight: '700',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '6px',
+                                        color: 'var(--primary)',
+                                        border: '1px solid hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.3)'
+                                    }}
+                                >
+                                    <Sparkles size={14} /> AI Assist
+                                </motion.button>
+                            </div>
+                        </div>
 
                         <div className="flex column gap-sm">
                             <div className="flex-between" style={{ borderBottom: '1px solid var(--border)', paddingBottom: '12px' }}>

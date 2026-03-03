@@ -5,7 +5,7 @@ const Post = require('../models/Post');
 const { protect } = require('../middleware/auth');
 const upload = require('../middleware/upload');
 
-// Specific routes first
+
 router.get('/suggestions', protect, async (req, res) => {
     try {
         const following = req.user.following || [];
@@ -53,7 +53,7 @@ router.get('/username/:username', async (req, res) => {
     }
 });
 
-// Dedicated profile update route
+
 router.put('/profile', protect, upload.single('image'), async (req, res) => {
     try {
         console.log('Profile update request received');
@@ -88,7 +88,7 @@ router.put('/profile', protect, upload.single('image'), async (req, res) => {
     }
 });
 
-// Parameterized routes last
+
 router.get('/:id', async (req, res) => {
     try {
         const user = await User.findById(req.params.id)
@@ -107,7 +107,11 @@ router.get('/:id', async (req, res) => {
 router.get('/:id/posts', async (req, res) => {
     try {
         const posts = await Post.find({ author: req.params.id })
-            .populate('author', 'username')
+            .populate('author', 'username profileImage')
+            .populate({
+                path: 'comments',
+                populate: { path: 'user', select: 'username profileImage' }
+            })
             .sort({ createdAt: -1 });
         res.json(posts);
     } catch (error) {
@@ -154,7 +158,7 @@ router.post('/:id/follow', protect, async (req, res) => {
 
 router.get('/:id/followers', async (req, res) => {
     try {
-        const user = await User.findById(req.params.id).populate('followers', 'username email bio');
+        const user = await User.findById(req.params.id).populate('followers', 'username fullName profileImage bio');
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
@@ -166,7 +170,7 @@ router.get('/:id/followers', async (req, res) => {
 
 router.get('/:id/following', async (req, res) => {
     try {
-        const user = await User.findById(req.params.id).populate('following', 'username email bio');
+        const user = await User.findById(req.params.id).populate('following', 'username fullName profileImage bio');
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
@@ -183,7 +187,13 @@ router.get('/:id/saved', protect, async (req, res) => {
         }
         const user = await User.findById(req.params.id).populate({
             path: 'savedPosts',
-            populate: { path: 'author', select: 'username profileImage' }
+            populate: [
+                { path: 'author', select: 'username profileImage' },
+                {
+                    path: 'comments',
+                    populate: { path: 'user', select: 'username profileImage' }
+                }
+            ]
         });
         if (!user) {
             return res.status(404).json({ message: 'User not found' });

@@ -27,11 +27,17 @@ const Home = () => {
     }, [loading, hasMore]);
 
     useEffect(() => {
+        setPosts([]);
+        setPage(1);
+        setHasMore(true);
+    }, [activeTab]);
+
+    useEffect(() => {
         document.title = 'ConnectX - Discover Amazing Content';
         const fetchPosts = async () => {
             setLoading(true);
             try {
-                const res = await axios.get(`/posts/feed?page=${page}&limit=5`);
+                const res = await axios.get(`/posts/feed?page=${page}&limit=5&tab=${activeTab}`);
                 setPosts(prevPosts => {
                     const newPosts = res.data.filter(np => !prevPosts.find(p => p._id === np._id));
                     return [...prevPosts, ...newPosts];
@@ -44,28 +50,21 @@ const Home = () => {
             }
         };
         fetchPosts();
-    }, [page]);
+    }, [page, activeTab]);
 
     return (
         <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="App"
         >
             <Navbar />
 
-            <div className="container" style={{
-                maxWidth: '1200px',
-                padding: '40px',
-                paddingLeft: '40px',
-                paddingRight: '40px',
-                margin: '0 auto'
-            }}>
+            <div className="page-content-centered">
                 {/* Header Section */}
                 <motion.div
                     initial={{ y: -20, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
-                    style={{ marginBottom: 'var(--spacing-xl)' }}
+                    style={{ marginBottom: 'var(--spacing-xl)', textAlign: 'center' }}
                 >
                     <h1 style={{
                         fontSize: '2.5rem',
@@ -152,8 +151,8 @@ const Home = () => {
                     display: 'grid',
                     gridTemplateColumns: '1fr',
                     gap: 'var(--spacing-xl)',
-                    maxWidth: '680px',
-                    margin: '0 auto'
+                    width: '100%',
+                    maxWidth: '680px'
                 }}>
                     {/* Posts Feed */}
                     <div>

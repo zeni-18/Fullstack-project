@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { Home, Search, PlusSquare, Heart, User, LogOut, Moon, Sun, Compass, Sparkles, Settings } from 'lucide-react';
+import { Home, Search, PlusSquare, Heart, User, LogOut, Moon, Sun, Compass, Sparkles, Settings, MessageSquare } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import CreatePost from './CreatePost';
 import axios from 'axios';
@@ -44,6 +44,7 @@ const Navbar = () => {
         { icon: Home, path: '/', title: 'Home', label: 'Home' },
         { icon: Compass, path: '/explore', title: 'Explore', label: 'Explore' },
         { icon: Heart, path: '/notifications', title: 'Notifications', label: 'Notifications', badge: unreadCount },
+        { icon: MessageSquare, path: '/messages', title: 'Messages', label: 'Messages' },
         { icon: User, path: `/profile/${user?.username}`, title: 'Profile', label: 'Profile' },
     ];
 

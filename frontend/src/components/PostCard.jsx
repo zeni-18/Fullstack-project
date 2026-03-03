@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { Heart, MessageCircle, Share2, Bookmark, MoreHorizontal, Sparkles } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useAuth } from '../context/AuthContext';
@@ -18,6 +19,8 @@ const PostCard = ({ post }) => {
     const [comments, setComments] = React.useState(post.comments || []);
     const [showHeartAnimation, setShowHeartAnimation] = React.useState(false);
     const [showOptions, setShowOptions] = React.useState(false);
+    const [showCommentOverlay, setShowCommentOverlay] = React.useState(false);
+    const [expandedMedia, setExpandedMedia] = React.useState(null);
 
     const handleSave = async () => {
         try {
@@ -54,6 +57,10 @@ const PostCard = ({ post }) => {
         }
     };
 
+    const toggleComments = () => {
+        setShowCommentOverlay(!showCommentOverlay);
+    };
+
     const handleComment = async (e) => {
         e.preventDefault();
         if (!commentText.trim()) return;
@@ -64,6 +71,27 @@ const PostCard = ({ post }) => {
             setCommentText('');
         } catch (err) {
             toast.error('Error adding comment');
+        }
+    };
+
+    const handleShare = async () => {
+        const shareData = {
+            title: 'ConnectX Post',
+            text: post.caption || 'Check out this post on ConnectX!',
+            url: window.location.origin
+        };
+
+        if (navigator.share) {
+            try {
+                await navigator.share(shareData);
+            } catch (err) {
+                if (err.name !== 'AbortError') {
+                    toast.error('Error sharing post');
+                }
+            }
+        } else {
+            const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareData.text + ' ' + shareData.url)}`;
+            window.open(whatsappUrl, '_blank');
         }
     };
 
@@ -92,26 +120,33 @@ const PostCard = ({ post }) => {
                 }}
                 onDoubleClick={handleLike}
             >
-                {post.mediaType === 'video' || post.imageUrl?.match(/\.(mp4|webm|avi|mov|mkv)$/i) ? (
-                    <VideoPlayer
-                        src={post.imageUrl}
-                        className="post-video"
-                    />
-                ) : (
-                    <img
-                        src={post.imageUrl}
-                        alt="Post"
-                        style={{
-                            width: '100%',
-                            display: 'block',
-                            cursor: 'pointer',
-                            minHeight: '350px',
-                            maxHeight: '600px',
-                            objectFit: 'cover'
-                        }}
-                    />
-                )}
-
+                {post.imageUrl ? (
+                    post.mediaType === 'video' || post.imageUrl?.match(/\.(mp4|webm|avi|mov|mkv)$/i) ? (
+                        <div onClick={() => setExpandedMedia({ type: 'video', url: post.imageUrl })} style={{ cursor: 'zoom-in' }}>
+                            <VideoPlayer
+                                src={post.imageUrl}
+                                className="post-video"
+                                forcePause={!!expandedMedia}
+                            />
+                        </div>
+                    ) : (
+                        <img
+                            src={post.imageUrl}
+                            alt="Post"
+                            onClick={() => setExpandedMedia({ type: 'image', url: post.imageUrl })}
+                            style={{
+                                width: '100%',
+                                display: 'block',
+                                cursor: 'zoom-in',
+                                minHeight: '350px',
+                                maxHeight: '600px',
+                                objectFit: 'cover',
+                                transition: 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)'
+                            }}
+                            className="post-image"
+                        />
+                    )
+                ) : null}
                 {/* Author Overlay at Bottom of Media */}
                 <div className="overlay-bottom">
                     <Link
@@ -183,6 +218,140 @@ const PostCard = ({ post }) => {
                             }}
                         >
                             <Heart size={120} color="white" fill="white" />
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                {/* Comment Overlay */}
+                <AnimatePresence>
+                    {showCommentOverlay && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 20 }}
+                            className="glass-heavy"
+                            style={{
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                                bottom: 0,
+                                zIndex: 100,
+                                display: 'flex',
+                                flexDirection: 'column',
+                                overflow: 'hidden',
+                                borderRadius: 'var(--radius-xl) var(--radius-xl) 0 0'
+                            }}
+                        >
+                            {/* Overlay Header */}
+                            <div style={{
+                                padding: 'var(--spacing-md) var(--spacing-lg)',
+                                borderBottom: '1px solid var(--border)',
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                background: 'rgba(255,255,255,0.1)'
+                            }}>
+                                <span style={{ fontWeight: '800', fontSize: '0.9rem', color: 'var(--text-main)' }}>COMMENTS</span>
+                                <button
+                                    onClick={() => setShowCommentOverlay(false)}
+                                    style={{
+                                        padding: '4px',
+                                        borderRadius: '50%',
+                                        background: 'var(--bg-secondary)',
+                                        color: 'var(--text-main)',
+                                        display: 'flex'
+                                    }}
+                                >
+                                    <Sparkles size={16} /> {/* Using Sparkles as a placeholder for "close" or just UI flair, or use a proper X icon if available */}
+                                </button>
+                            </div>
+
+                            {/* Comment List */}
+                            <div style={{
+                                flex: 1,
+                                overflowY: 'auto',
+                                padding: 'var(--spacing-md)',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: 'var(--spacing-sm)'
+                            }}>
+                                {comments.length > 0 ? (
+                                    comments.map((comment, idx) => (
+                                        <motion.div
+                                            initial={{ opacity: 0, x: -10 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            key={idx}
+                                            className="glass"
+                                            style={{
+                                                padding: 'var(--spacing-sm) var(--spacing-md)',
+                                                borderRadius: 'var(--radius-md)',
+                                                fontSize: '0.85rem'
+                                            }}
+                                        >
+                                            <span style={{ fontWeight: '700', marginRight: '8px', color: 'var(--primary)' }}>
+                                                {comment.user?.username || 'user'}
+                                            </span>
+                                            {comment.text}
+                                        </motion.div>
+                                    ))
+                                ) : (
+                                    <div style={{
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        height: '100%',
+                                        color: 'var(--text-tertiary)',
+                                        gap: 'var(--spacing-sm)'
+                                    }}>
+                                        <MessageCircle size={32} opacity={0.3} />
+                                        <p style={{ fontSize: '0.85rem', fontWeight: '600' }}>No comments yet</p>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Comment Input inside Overlay */}
+                            <form
+                                onSubmit={handleComment}
+                                style={{
+                                    padding: 'var(--spacing-md)',
+                                    background: 'rgba(255,255,255,0.2)',
+                                    backdropFilter: 'blur(10px)',
+                                    borderTop: '1px solid var(--border)',
+                                    display: 'flex',
+                                    gap: 'var(--spacing-sm)'
+                                }}
+                            >
+                                <input
+                                    type="text"
+                                    placeholder="Add a comment..."
+                                    value={commentText}
+                                    onChange={(e) => setCommentText(e.target.value)}
+                                    autoFocus
+                                    style={{
+                                        flex: 1,
+                                        border: '1px solid var(--border)',
+                                        borderRadius: 'var(--radius-full)',
+                                        padding: '8px 16px',
+                                        fontSize: '0.85rem',
+                                        background: 'rgba(255,255,255,0.5)',
+                                        outline: 'none'
+                                    }}
+                                />
+                                <button
+                                    type="submit"
+                                    disabled={!commentText.trim()}
+                                    className="btn-primary"
+                                    style={{
+                                        padding: 'var(--spacing-xs) var(--spacing-md)',
+                                        fontSize: '0.8rem',
+                                        borderRadius: 'var(--radius-full)'
+                                    }}
+                                >
+                                    Post
+                                </button>
+                            </form>
                         </motion.div>
                     )}
                 </AnimatePresence>
@@ -300,14 +469,15 @@ const PostCard = ({ post }) => {
 
                         <motion.button
                             whileTap={{ scale: 0.85 }}
-                            onClick={() => setShowComments(!showComments)}
+                            onClick={toggleComments}
                             style={{
                                 display: 'flex',
                                 alignItems: 'center',
-                                gap: '6px'
+                                gap: '6px',
+                                color: showCommentOverlay ? 'var(--primary)' : 'var(--text-main)'
                             }}
                         >
-                            <MessageCircle size={22} />
+                            <MessageCircle size={22} fill={showCommentOverlay ? 'var(--primary)' : 'none'} />
                             <span style={{ fontWeight: '700', fontSize: '0.9rem' }}>
                                 {comments.length}
                             </span>
@@ -315,7 +485,11 @@ const PostCard = ({ post }) => {
 
                         <div style={{ width: '1px', height: '20px', background: 'var(--border)' }} />
 
-                        <motion.button whileTap={{ scale: 0.85 }}>
+                        <motion.button
+                            whileTap={{ scale: 0.85 }}
+                            onClick={handleShare}
+                            style={{ color: 'var(--text-main)' }}
+                        >
                             <Share2 size={22} />
                         </motion.button>
                     </div>
@@ -349,102 +523,96 @@ const PostCard = ({ post }) => {
                 }}>
                     {formatDistanceToNow(new Date(post.createdAt))} ago
                 </div>
-
-                {/* Comments Section */}
-                {comments.length > 0 && (
-                    <button
-                        onClick={() => setShowComments(!showComments)}
-                        style={{
-                            color: 'var(--primary)',
-                            fontSize: '0.9rem',
-                            fontWeight: '700',
-                            marginBottom: showComments ? 'var(--spacing-md)' : 0
-                        }}
-                    >
-                        {showComments ? 'Hide comments' : `View all ${comments.length} comments`}
-                    </button>
-                )}
-
-                <AnimatePresence>
-                    {showComments && (
-                        <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: 'auto', opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            style={{ overflow: 'hidden' }}
-                        >
-                            <div style={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                gap: 'var(--spacing-md)',
-                                marginTop: 'var(--spacing-md)'
-                            }}>
-                                {comments.map((comment, idx) => (
-                                    <div
-                                        key={idx}
-                                        className="glass"
-                                        style={{
-                                            padding: 'var(--spacing-md)',
-                                            borderRadius: 'var(--radius-md)',
-                                            fontSize: '0.9rem'
-                                        }}
-                                    >
-                                        <span style={{
-                                            fontWeight: '700',
-                                            marginRight: 'var(--spacing-sm)',
-                                            color: 'var(--primary)'
-                                        }}>
-                                            {comment.user?.username || 'user'}
-                                        </span>
-                                        {comment.text}
-                                    </div>
-                                ))}
-                            </div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
             </div>
 
-            {/* Comment Input */}
-            <form
-                onSubmit={handleComment}
-                className="glass"
-                style={{
-                    borderTop: '1px solid var(--border)',
-                    display: 'flex',
-                    padding: 'var(--spacing-md) var(--spacing-lg)',
-                    alignItems: 'center',
-                    gap: 'var(--spacing-sm)',
-                    borderRadius: '0 0 var(--radius-xl) var(--radius-xl)'
-                }}
-            >
-                <input
-                    type="text"
-                    placeholder="Add a comment..."
-                    value={commentText}
-                    onChange={(e) => setCommentText(e.target.value)}
-                    style={{
-                        flex: 1,
-                        border: 'none',
-                        outline: 'none',
-                        fontSize: '0.95rem',
-                        background: 'transparent',
-                        padding: '0'
-                    }}
-                />
-                <button
-                    type="submit"
-                    disabled={!commentText.trim()}
-                    className="btn-primary"
-                    style={{
-                        padding: 'var(--spacing-sm) var(--spacing-lg)',
-                        fontSize: '0.85rem',
-                        opacity: commentText.trim() ? 1 : 0.5
-                    }}
-                >
-                    Post
-                </button>
-            </form>
+            {createPortal(
+                <AnimatePresence>
+                    {expandedMedia && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setExpandedMedia(null)}
+                            style={{
+                                position: 'fixed',
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                                bottom: 0,
+                                backgroundColor: 'rgba(0, 0, 0, 0.95)',
+                                zIndex: 10000,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                cursor: 'zoom-out',
+                                padding: 'var(--spacing-xl)'
+                            }}
+                        >
+                            {expandedMedia.type === 'image' ? (
+                                <motion.img
+                                    initial={{ scale: 0.9, opacity: 0 }}
+                                    animate={{ scale: 1, opacity: 1 }}
+                                    exit={{ scale: 0.9, opacity: 0 }}
+                                    src={expandedMedia.url}
+                                    alt="Expanded"
+                                    style={{
+                                        maxWidth: '95%',
+                                        maxHeight: '95vh',
+                                        objectFit: 'contain',
+                                        borderRadius: 'var(--radius-lg)',
+                                        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
+                                    }}
+                                    onClick={(e) => e.stopPropagation()}
+                                />
+                            ) : (
+                                <motion.div
+                                    initial={{ scale: 0.9, opacity: 0 }}
+                                    animate={{ scale: 1, opacity: 1 }}
+                                    exit={{ scale: 0.9, opacity: 0 }}
+                                    style={{
+                                        width: '95%',
+                                        maxWidth: '1200px',
+                                        maxHeight: '90vh',
+                                        borderRadius: 'var(--radius-lg)',
+                                        overflow: 'hidden',
+                                        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
+                                    }}
+                                    onClick={(e) => e.stopPropagation()}
+                                >
+                                    <VideoPlayer
+                                        src={expandedMedia.url}
+                                        autoPlay={true}
+                                    />
+                                </motion.div>
+                            )}
+
+                            <button
+                                onClick={() => setExpandedMedia(null)}
+                                style={{
+                                    position: 'absolute',
+                                    top: '30px',
+                                    right: '30px',
+                                    background: 'rgba(255, 255, 255, 0.1)',
+                                    border: 'none',
+                                    color: 'white',
+                                    width: '44px',
+                                    height: '44px',
+                                    borderRadius: '50%',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    cursor: 'pointer',
+                                    backdropFilter: 'blur(10px)',
+                                    transition: 'all 0.2s'
+                                }}
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                            </button>
+                        </motion.div>
+                    )}
+                </AnimatePresence>,
+                document.body
+            )}
         </motion.div>
     );
 };
