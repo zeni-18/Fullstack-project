@@ -19,7 +19,6 @@ const userSchema = new mongoose.Schema({
     },
     password: {
         type: String,
-        required: [true, 'Please add a password'],
         minlength: [6, 'Password must be at least 6 characters'],
         select: false
     },
@@ -51,7 +50,18 @@ const userSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Post',
         default: []
-    }]
+    }],
+    isVerified: {
+        type: Boolean,
+        default: false
+    },
+    verificationCode: String,
+    verificationCodeExpire: Date,
+    googleId: {
+        type: String,
+        unique: true,
+        sparse: true
+    }
 }, {
     timestamps: true
 });

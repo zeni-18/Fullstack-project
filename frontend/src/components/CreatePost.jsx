@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { X, Image as ImageIcon, Video as VideoIcon, MapPin, Send, Sparkles } from 'lucide-react';
+import { X, Image as ImageIcon, Video as VideoIcon, MapPin, Send, Sparkles, Camera } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
+import CameraCapture from './CameraCapture';
 
 const CreatePost = ({ onClose, onPostCreated }) => {
     const { user } = useAuth();
@@ -13,19 +14,26 @@ const CreatePost = ({ onClose, onPostCreated }) => {
     const [caption, setCaption] = useState('');
     const [location, setLocation] = useState('');
     const [loading, setLoading] = useState(false);
+    const [isCameraOpen, setIsCameraOpen] = useState(false);
 
     const handleMediaChange = (e) => {
         const file = e.target.files[0];
         if (file) {
             setMedia(file);
             setPreview(URL.createObjectURL(file));
-            // Detect if it's a video or image
             if (file.type.startsWith('video/')) {
                 setMediaType('video');
             } else {
                 setMediaType('image');
             }
         }
+    };
+
+    const handleCameraCapture = (file) => {
+        setMedia(file);
+        setPreview(URL.createObjectURL(file));
+        setMediaType(file.type.startsWith('video/') ? 'video' : 'image');
+        setIsCameraOpen(false);
     };
 
     const handleSubmit = async (e) => {
@@ -75,19 +83,23 @@ const CreatePost = ({ onClose, onPostCreated }) => {
                 style={{
                     backgroundColor: 'var(--card-bg)',
                     width: '100%',
-                    maxWidth: '800px',
+                    maxWidth: '850px',
                     borderRadius: 'var(--radius-lg)',
                     overflow: 'hidden',
                     display: 'flex',
                     flexDirection: 'column',
                     maxHeight: '90vh',
-                    boxShadow: 'var(--shadow-lg)'
+                    boxShadow: 'var(--shadow-xl)',
+                    border: '1px solid var(--border)'
                 }}
                 onClick={(e) => e.stopPropagation()}
             >
-                <div className="flex-between" style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>
-                    <button onClick={onClose} style={{ color: 'var(--text-main)' }}><X size={24} /></button>
-                    <h3 style={{ fontSize: '1.1rem', fontWeight: '700' }}>Create New Post</h3>
+                {/* Header */}
+                <div className="flex-between" style={{ padding: '16px 24px', borderBottom: '1px solid var(--border)', background: 'var(--card-bg)' }}>
+                    <button onClick={onClose} style={{ color: 'var(--text-main)', opacity: 0.7, transition: 'opacity 0.2s' }} onMouseEnter={e => e.currentTarget.style.opacity = 1} onMouseLeave={e => e.currentTarget.style.opacity = 0.7}>
+                        <X size={20} />
+                    </button>
+                    <h3 style={{ fontSize: '1rem', fontWeight: '700', letterSpacing: '-0.01em' }}>Create New Post</h3>
                     <button
                         onClick={handleSubmit}
                         disabled={loading || !media}
@@ -95,7 +107,8 @@ const CreatePost = ({ onClose, onPostCreated }) => {
                             color: 'var(--primary)',
                             fontWeight: '800',
                             fontSize: '0.95rem',
-                            opacity: (loading || !media) ? 0.5 : 1
+                            opacity: (loading || !media) ? 0.3 : 1,
+                            transition: 'all 0.2s'
                         }}
                     >
                         {loading ? <div className="spinner" style={{ width: '16px', height: '16px' }}></div> : 'Share'}
@@ -103,49 +116,114 @@ const CreatePost = ({ onClose, onPostCreated }) => {
                 </div>
 
                 <div className="flex" style={{ height: '100%', overflow: 'hidden', flex: 1 }}>
+                    {/* Left Media Panel */}
                     <div style={{
-                        flex: 1.2,
+                        flex: 1.3,
                         backgroundColor: 'var(--bg)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         borderRight: '1px solid var(--border)',
                         position: 'relative',
-                        minHeight: '400px'
+                        minHeight: '480px',
+                        background: 'linear-gradient(135deg, var(--bg) 0%, var(--bg-secondary) 100%)'
                     }}>
                         {preview ? (
                             mediaType === 'video' ? (
-                                <video src={preview} controls style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                                <video src={preview} controls style={{ width: '100%', height: '100%', objectFit: 'contain', background: 'black' }} />
                             ) : (
-                                <img src={preview} style={{ width: '100%', height: '100%', objectFit: 'contain' }} alt="Preview" />
+                                <img src={preview} style={{ width: '100%', height: '100%', objectFit: 'contain', background: 'black' }} alt="Preview" />
                             )
                         ) : (
-                            <div className="flex column flex-center" style={{ gap: '16px', color: 'var(--text-secondary)' }}>
-                                <div style={{ display: 'flex', gap: '16px' }}>
-                                    <ImageIcon size={48} strokeWidth={1} />
-                                    <VideoIcon size={48} strokeWidth={1} />
+                            <div className="flex column flex-center" style={{ gap: '24px', color: 'var(--text-secondary)', padding: '40px', textAlign: 'center' }}>
+                                <div style={{
+                                    display: 'flex',
+                                    gap: '24px',
+                                    background: 'var(--card-bg)',
+                                    padding: '24px',
+                                    borderRadius: '50%',
+                                    border: '1px solid var(--border)',
+                                    boxShadow: 'var(--shadow-sm)'
+                                }}>
+                                    <ImageIcon size={40} strokeWidth={1} />
+                                    <VideoIcon size={40} strokeWidth={1} />
                                 </div>
-                                <p style={{ fontWeight: '500' }}>Select an image or video to start</p>
-                                <label className="btn-primary" style={{ cursor: 'pointer', padding: '10px 20px' }}>
-                                    Select from computer
-                                    <input type="file" hidden accept="image/*,video/*" onChange={handleMediaChange} />
-                                </label>
-                                <p style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>Max 1GB • MP4, WebM, AVI, JPG, PNG</p>
+                                <div style={{ marginBottom: '8px' }}>
+                                    <p style={{ fontWeight: '600', fontSize: '1.2rem', color: 'var(--text-main)', letterSpacing: '-0.01em' }}>Select an image or video</p>
+                                    <p style={{ fontSize: '0.85rem', color: 'var(--text-tertiary)', marginTop: '4px' }}>Max 1GB • MP4, WEBM, JPG, PNG</p>
+                                </div>
+
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%', maxWidth: '280px' }}>
+                                    <label className="btn-primary" style={{
+                                        cursor: 'pointer',
+                                        padding: '14px 24px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '10px',
+                                        fontSize: '0.95rem',
+                                        fontWeight: '700',
+                                        transition: 'all 0.2s'
+                                    }}>
+                                        <ImageIcon size={18} /> Select from computer
+                                        <input type="file" hidden accept="image/*,video/*" onChange={handleMediaChange} />
+                                    </label>
+
+                                    <button
+                                        onClick={() => setIsCameraOpen(true)}
+                                        className="card"
+                                        style={{
+                                            padding: '14px 24px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            gap: '10px',
+                                            fontWeight: '700',
+                                            color: 'var(--text-main)',
+                                            fontSize: '0.95rem',
+                                            border: '1px solid var(--border)',
+                                            transition: 'all 0.2s',
+                                            background: 'var(--card-bg)'
+                                        }}
+                                        onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-secondary)'}
+                                        onMouseLeave={(e) => e.currentTarget.style.background = 'var(--card-bg)'}
+                                    >
+                                        <Camera size={18} /> Open Camera
+                                    </button>
+                                </div>
                             </div>
                         )}
                     </div>
 
-                    <div style={{ flex: 1, padding: '24px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                    {/* Right Info Panel */}
+                    <div style={{
+                        flex: 1,
+                        padding: '24px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '24px',
+                        backgroundColor: 'var(--card-bg)'
+                    }}>
                         <div className="flex gap-sm" style={{ alignItems: 'center' }}>
                             <img
                                 src={user?.profileImage || 'https://res.cloudinary.com/demo/image/upload/d_avatar.png/v1/user_profile_default.png'}
-                                style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }}
+                                style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover', border: '1px solid var(--border)' }}
                                 alt="me"
                             />
                             <span style={{ fontWeight: '700', fontSize: '0.9rem' }}>{user?.username}</span>
                         </div>
 
-                        <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        <div style={{
+                            position: 'relative',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '12px',
+                            background: 'var(--bg)',
+                            padding: '16px',
+                            borderRadius: 'var(--radius-md)',
+                            border: '1px solid var(--border)',
+                            boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.02)'
+                        }}>
                             <textarea
                                 placeholder="Write a caption..."
                                 value={caption}
@@ -156,9 +234,11 @@ const CreatePost = ({ onClose, onPostCreated }) => {
                                     resize: 'none',
                                     padding: 0,
                                     fontSize: '1rem',
-                                    height: '120px',
+                                    height: '140px',
                                     background: 'transparent',
-                                    color: 'var(--text-main)'
+                                    color: 'var(--text-main)',
+                                    lineHeight: '1.6',
+                                    outline: 'none'
                                 }}
                             />
                             <div className="flex" style={{ justifyContent: 'flex-end' }}>
@@ -166,50 +246,47 @@ const CreatePost = ({ onClose, onPostCreated }) => {
                                     whileHover={{ scale: 1.05 }}
                                     whileTap={{ scale: 0.95 }}
                                     onClick={async () => {
-                                        if (!caption && !media) return toast.info('Add some context or select media for better AI results');
-                                        const loadingToast = toast.loading('Gemini is thinking...');
+                                        if (!caption && !media) return toast.info('Add context/media for better AI results');
+                                        const loadingToast = toast.loading('AI is thinking...');
                                         try {
                                             const payload = {
-                                                prompt: `Write a creative and engaging caption for a social media post. ${caption ? `Context: ${caption}` : ''} ${mediaType ? `Media type: ${mediaType}` : ''}. Keep it concise and use relevant hashtags.`
+                                                prompt: `Write an engaging caption for social media. ${caption ? `Context: ${caption}` : ''} ${mediaType ? `Media: ${mediaType}` : ''}.`
                                             };
 
                                             if (mediaType === 'image' && media) {
-                                                // Convert file to base64 for vision
                                                 const reader = new FileReader();
                                                 reader.readAsDataURL(media);
                                                 reader.onloadend = async () => {
                                                     const base64data = reader.result;
                                                     try {
-                                                        const res = await axios.post('/ai/generate-post', {
-                                                            ...payload,
-                                                            image: base64data
-                                                        });
+                                                        const res = await axios.post('/ai/generate-post', { ...payload, image: base64data });
                                                         setCaption(res.data.content);
-                                                        toast.update(loadingToast, { render: 'AI Caption generated!', type: 'success', isLoading: false, autoClose: 3000 });
+                                                        toast.update(loadingToast, { render: 'AI Caption generated!', type: 'success', isLoading: false, autoClose: 2000 });
                                                     } catch (err) {
-                                                        toast.update(loadingToast, { render: 'AI Assist failed.', type: 'error', isLoading: false, autoClose: 3000 });
+                                                        toast.update(loadingToast, { render: 'Vision AI failed.', type: 'error', isLoading: false, autoClose: 2000 });
                                                     }
                                                 };
                                             } else {
                                                 const res = await axios.post('/ai/generate-post', payload);
                                                 setCaption(res.data.content);
-                                                toast.update(loadingToast, { render: 'AI Caption generated!', type: 'success', isLoading: false, autoClose: 3000 });
+                                                toast.update(loadingToast, { render: 'AI Caption generated!', type: 'success', isLoading: false, autoClose: 2000 });
                                             }
                                         } catch (err) {
-                                            toast.update(loadingToast, { render: 'AI Assist failed.', type: 'error', isLoading: false, autoClose: 3000 });
+                                            toast.update(loadingToast, { render: 'AI Assist failed.', type: 'error', isLoading: false, autoClose: 2000 });
                                         }
                                     }}
                                     className="glass"
                                     style={{
-                                        padding: '6px 12px',
-                                        borderRadius: 'var(--radius-sm)',
+                                        padding: '8px 14px',
+                                        borderRadius: 'var(--radius-full)',
                                         fontSize: '0.8rem',
                                         fontWeight: '700',
                                         display: 'flex',
                                         alignItems: 'center',
-                                        gap: '6px',
+                                        gap: '8px',
                                         color: 'var(--primary)',
-                                        border: '1px solid hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.3)'
+                                        border: '1px solid hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.2)',
+                                        background: 'hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.05)'
                                     }}
                                 >
                                     <Sparkles size={14} /> AI Assist
@@ -217,29 +294,42 @@ const CreatePost = ({ onClose, onPostCreated }) => {
                             </div>
                         </div>
 
-                        <div className="flex column gap-sm">
-                            <div className="flex-between" style={{ borderBottom: '1px solid var(--border)', paddingBottom: '12px' }}>
-                                <div className="flex gap-sm" style={{ color: 'var(--text-main)' }}>
-                                    <MapPin size={20} />
-                                    <input
-                                        type="text"
-                                        placeholder="Add location"
-                                        value={location}
-                                        onChange={(e) => setLocation(e.target.value)}
-                                        style={{ border: 'none', padding: 0, fontSize: '0.95rem', background: 'transparent' }}
-                                    />
-                                </div>
-                            </div>
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '12px',
+                            padding: '14px 16px',
+                            background: 'var(--bg)',
+                            borderRadius: 'var(--radius-md)',
+                            border: '1px solid var(--border)'
+                        }}>
+                            <MapPin size={18} style={{ color: 'var(--text-tertiary)' }} />
+                            <input
+                                type="text"
+                                placeholder="Add location"
+                                value={location}
+                                onChange={(e) => setLocation(e.target.value)}
+                                style={{ border: 'none', padding: 0, fontSize: '0.95rem', background: 'transparent', width: '100%', color: 'var(--text-main)', outline: 'none' }}
+                            />
                         </div>
 
-                        <div style={{ marginTop: 'auto', padingTop: '20px' }}>
-                            <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
+                        <div style={{ marginTop: 'auto', padding: '16px', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
+                            <p style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', lineHeight: '1.6', textAlign: 'center' }}>
                                 Your post will be shared with your followers and can be discovered in Explore.
                             </p>
                         </div>
                     </div>
                 </div>
             </motion.div>
+
+            <AnimatePresence>
+                {isCameraOpen && (
+                    <CameraCapture
+                        onCapture={handleCameraCapture}
+                        onClose={() => setIsCameraOpen(false)}
+                    />
+                )}
+            </AnimatePresence>
         </div>
     );
 };

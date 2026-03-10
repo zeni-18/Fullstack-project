@@ -4,10 +4,11 @@ import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { io } from 'socket.io-client';
-import { Send, Search, Image as ImageIcon, MoreVertical, ExternalLink, MessageSquare } from 'lucide-react';
+import { Send, Search, Image as ImageIcon, MoreVertical, ExternalLink, MessageSquare, Camera } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import { Link, useLocation } from 'react-router-dom';
 import VideoPlayer from '../components/VideoPlayer';
+import CameraCapture from '../components/CameraCapture';
 
 const ENDPOINT = "http://localhost:5000";
 
@@ -24,6 +25,7 @@ const Messages = () => {
     const [filePreview, setFilePreview] = useState(null);
     const [expandedMedia, setExpandedMedia] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [isCameraOpen, setIsCameraOpen] = useState(false);
     const messagesEndRef = useRef(null);
     const fileInputRef = useRef(null);
 
@@ -125,6 +127,12 @@ const Messages = () => {
         setSelectedFile(null);
         setFilePreview(null);
         if (fileInputRef.current) fileInputRef.current.value = '';
+    };
+
+    const handleCameraCapture = (file) => {
+        setSelectedFile(file);
+        setFilePreview(URL.createObjectURL(file));
+        setIsCameraOpen(false);
     };
 
     const sendMessage = async (e) => {
@@ -576,8 +584,37 @@ const Messages = () => {
                                         ref={fileInputRef}
                                         onChange={handleFileChange}
                                     />
-                                    <button type="button" onClick={() => fileInputRef.current?.click()} className="btn-ghost" style={{ padding: '10px', borderRadius: '50%' }} title="Attach Media">
+                                    <button
+                                        type="button"
+                                        onClick={() => fileInputRef.current?.click()}
+                                        className="btn-ghost"
+                                        style={{
+                                            padding: '10px',
+                                            borderRadius: 'var(--radius-full)',
+                                            color: 'var(--text-secondary)',
+                                            transition: 'all 0.2s'
+                                        }}
+                                        title="Attach Media"
+                                        onMouseEnter={e => e.currentTarget.style.color = 'var(--primary)'}
+                                        onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}
+                                    >
                                         <ImageIcon size={20} />
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsCameraOpen(true)}
+                                        className="btn-ghost"
+                                        style={{
+                                            padding: '10px',
+                                            borderRadius: 'var(--radius-full)',
+                                            color: 'var(--text-secondary)',
+                                            transition: 'all 0.2s'
+                                        }}
+                                        title="Open Camera"
+                                        onMouseEnter={e => e.currentTarget.style.color = 'var(--primary)'}
+                                        onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}
+                                    >
+                                        <Camera size={20} />
                                     </button>
                                     <input
                                         type="text"
@@ -636,6 +673,12 @@ const Messages = () => {
 
 
             <AnimatePresence>
+                {isCameraOpen && (
+                    <CameraCapture
+                        onCapture={handleCameraCapture}
+                        onClose={() => setIsCameraOpen(false)}
+                    />
+                )}
                 {expandedMedia && (
                     <motion.div
                         initial={{ opacity: 0 }}

@@ -17,6 +17,7 @@ import Notifications from './pages/Notifications';
 import Settings from './pages/Settings';
 import ForgotPassword from './pages/ForgotPassword';
 import Messages from './pages/Messages';
+import VerifyEmail from './pages/VerifyEmail';
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -33,6 +34,7 @@ function AppRoutes() {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
         <Route path="/explore" element={<ProtectedRoute><Explore /></ProtectedRoute>} />

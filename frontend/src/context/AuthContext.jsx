@@ -12,6 +12,17 @@ export const AuthProvider = ({ children }) => {
     axios.defaults.baseURL = '/api';
 
     useEffect(() => {
+        // Intercept 401 errors to auto-logout
+        const interceptor = axios.interceptors.response.use(
+            (response) => response,
+            (error) => {
+                if (error.response?.status === 401) {
+                    logout();
+                }
+                return Promise.reject(error);
+            }
+        );
+
         const initAuth = () => {
             try {
                 const storedUser = localStorage.getItem('user');
@@ -32,6 +43,10 @@ export const AuthProvider = ({ children }) => {
         };
 
         initAuth();
+
+        return () => {
+            axios.interceptors.response.eject(interceptor);
+        };
     }, []);
 
     const login = async (email, password) => {
@@ -48,7 +63,8 @@ export const AuthProvider = ({ children }) => {
         } catch (err) {
             return {
                 success: false,
-                message: err.response?.data?.message || 'Login failed'
+                message: err.response?.data?.message || 'Login failed',
+                unverified: err.response?.data?.unverified
             };
         }
     };
@@ -56,6 +72,22 @@ export const AuthProvider = ({ children }) => {
     const register = async (userData) => {
         try {
             const res = await axios.post('/auth/register', userData);
+            return { 
+                success: true, 
+                message: res.data.message,
+                email: res.data.email
+            };
+        } catch (err) {
+            return {
+                success: false,
+                message: err.response?.data?.message || 'Registration failed'
+            };
+        }
+    };
+
+    const verifyEmail = async (email, code) => {
+        try {
+            const res = await axios.post('/auth/verify-email', { email, code });
             const { token, ...user } = res.data;
 
             setUser(user);
@@ -67,7 +99,39 @@ export const AuthProvider = ({ children }) => {
         } catch (err) {
             return {
                 success: false,
-                message: err.response?.data?.message || 'Registration failed'
+                message: err.response?.data?.message || 'Verification failed'
+            };
+        }
+    };
+
+    const resendCode = async (email) => {
+        try {
+            const res = await axios.post('/auth/resend-code', { email });
+            return { success: true, message: res.data.message };
+        } catch (err) {
+            return {
+                success: false,
+                message: err.response?.data?.message || 'Failed to resend code'
+            };
+        }
+    };
+
+    const googleLogin = async (googleData) => {
+        try {
+            // googleData will now contain { credential } from the GoogleLogin component
+            const res = await axios.post('/auth/google-login', googleData);
+            const { token, ...user } = res.data;
+
+            setUser(user);
+            localStorage.setItem('user', JSON.stringify(user));
+            localStorage.setItem('token', token);
+            axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+            return { success: true };
+        } catch (err) {
+            return {
+                success: false,
+                message: err.response?.data?.message || 'Google Login failed'
             };
         }
     };
@@ -84,6 +148,9 @@ export const AuthProvider = ({ children }) => {
         loading,
         login,
         register,
+        verifyEmail,
+        resendCode,
+        googleLogin,
         logout,
         setUser
     };

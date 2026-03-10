@@ -69,7 +69,9 @@ const Navbar = () => {
                     padding: 'var(--spacing-lg)',
                     borderRight: '1px solid var(--glass-border)',
                     transition: 'width var(--transition-base)',
-                    overflow: 'hidden'
+                    overflowY: 'auto',
+                    scrollbarWidth: 'none',
+                    msOverflowStyle: 'none'
                 }}
             >
                 {/* Logo Section */}
@@ -212,6 +214,7 @@ const Navbar = () => {
                 <div style={{
                     borderTop: '1px solid var(--border)',
                     paddingTop: 'var(--spacing-lg)',
+                    paddingBottom: 'var(--spacing-xl)',
                     display: 'flex',
                     flexDirection: 'column',
                     gap: 'var(--spacing-sm)'
@@ -330,6 +333,12 @@ const Navbar = () => {
                         {!isCollapsed && <span>Settings</span>}
                     </Link>
                 </div>
+
+                <style>{`
+                    nav::-webkit-scrollbar {
+                        display: none;
+                    }
+                `}</style>
             </motion.nav>
 
             {/* Mobile Overlay */}
