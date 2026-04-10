@@ -9,7 +9,9 @@ export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    axios.defaults.baseURL = '/api';
+    // In production: VITE_API_URL=https://your-app.onrender.com/api
+    // In local dev: falls back to /api (Vite proxy handles it)
+    axios.defaults.baseURL = import.meta.env.VITE_API_URL || '/api';
 
     useEffect(() => {
         // Intercept 401 errors to auto-logout

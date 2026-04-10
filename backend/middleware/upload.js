@@ -1,17 +1,11 @@
 const multer = require('multer');
 const path = require('path');
 
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, 'uploads/');
-    },
-    filename: function (req, file, cb) {
-        cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname));
-    }
-});
+// Use memoryStorage so files are stored in RAM (buffer), not on disk.
+// This is required for Render/cloud deployments where the filesystem is read-only.
+const storage = multer.memoryStorage();
 
 function checkFileType(file, cb) {
-
     const filetypes = /jpeg|jpg|png|gif|webp|mp4|webm|avi|mov|mkv/;
     const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
     const mimetype = /image\/(jpeg|jpg|png|gif|webp)|video\/(mp4|webm|x-msvideo|quicktime|x-matroska)/.test(file.mimetype);
@@ -25,7 +19,7 @@ function checkFileType(file, cb) {
 
 const upload = multer({
     storage: storage,
-    limits: { fileSize: 1024 * 1024 * 1024 }, // 1GB limit
+    limits: { fileSize: 20 * 1024 * 1024 }, // 20MB limit (suitable for cloud)
     fileFilter: function (req, file, cb) {
         checkFileType(file, cb);
     }

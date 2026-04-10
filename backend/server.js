@@ -1,7 +1,6 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const path = require('path');
 const connectDB = require('./config/db');
 
 dotenv.config();
@@ -9,11 +8,25 @@ connectDB();
 
 const app = express();
 
-app.use(cors());
+// CORS: allow requests from the deployed frontend (Vercel) or localhost in dev
+const allowedOrigins = [
+    process.env.CLIENT_URL,
+    'http://localhost:5173',
+    'http://localhost:3000'
+].filter(Boolean);
+
+app.use(cors({
+    origin: function (origin, callback) {
+        // Allow requests with no origin (e.g. mobile apps, curl, Postman)
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.includes(origin)) return callback(null, true);
+        callback(new Error('Not allowed by CORS'));
+    },
+    credentials: true
+}));
+
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
-
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/posts', require('./routes/posts'));
@@ -23,7 +36,7 @@ app.use('/api/messages', require('./routes/messages'));
 app.use('/api/ai', require('./routes/ai'));
 
 app.get('/', (req, res) => {
-    res.json({ message: 'Blog Platform API' });
+    res.json({ message: 'ConnectX API is running' });
 });
 
 const multer = require('multer');
@@ -38,8 +51,8 @@ app.use((err, req, res, next) => {
         return res.status(400).json({ message: err.message });
     }
 
-    if (err === 'Error: Images Only!') {
-        return res.status(400).json({ message: err });
+    if (err.message === 'Not allowed by CORS') {
+        return res.status(403).json({ message: 'CORS error: origin not allowed' });
     }
 
     res.status(500).json({ message: 'Something went wrong!' });
@@ -53,7 +66,7 @@ const { Server } = require('socket.io');
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
-        origin: '*',
+        origin: allowedOrigins,
         methods: ['GET', 'POST']
     }
 });
@@ -78,3 +91,6 @@ io.on('connection', (socket) => {
 server.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
+
+module.exports = app;
+

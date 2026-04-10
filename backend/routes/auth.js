@@ -35,7 +35,13 @@ router.post('/register', upload.single('profileImage'), async (req, res) => {
             });
         }
 
-        const profileImageUrl = req.file ? `/uploads/${req.file.filename}` : `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`;
+        let profileImageUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`;
+        if (req.file) {
+            // Convert buffer to Base64 data URL
+            const base64 = req.file.buffer.toString('base64');
+            profileImageUrl = `data:${req.file.mimetype};base64,${base64}`;
+        }
+
         const user = await User.create({
             username,
             email,
