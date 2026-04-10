@@ -95,8 +95,8 @@ router.post('/', protect, upload.single('image'), async (req, res) => {
 
         const post = await Post.create({
             caption,
-            imageUrl: `/uploads/${req.file.filename}`,
-            mediaUrl: `/uploads/${req.file.filename}`,
+            imageUrl: req.file.path,
+            mediaUrl: req.file.path,
             mediaType: mediaType || detectedMediaType,
             author: req.user._id,
             tags: tags ? tags.split(',').map(tag => tag.trim()) : [],

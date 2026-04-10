@@ -69,7 +69,7 @@ router.put('/profile', protect, upload.single('image'), async (req, res) => {
         if (fullName !== undefined) user.fullName = fullName;
 
         if (req.file) {
-            user.profileImage = `/uploads/${req.file.filename}`;
+            user.profileImage = req.file.path;
         }
 
         await user.save();
