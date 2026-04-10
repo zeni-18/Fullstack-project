@@ -56,6 +56,9 @@ router.get('/username/:username', async (req, res) => {
 
 router.put('/profile', protect, upload.single('image'), async (req, res) => {
     try {
+        console.log('Profile update request received');
+        console.log('Body:', req.body);
+        console.log('File:', req.file);
         const user = await User.findById(req.user._id);
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
@@ -66,9 +69,7 @@ router.put('/profile', protect, upload.single('image'), async (req, res) => {
         if (fullName !== undefined) user.fullName = fullName;
 
         if (req.file) {
-            // Convert buffer to Base64 data URL
-            const base64 = req.file.buffer.toString('base64');
-            user.profileImage = `data:${req.file.mimetype};base64,${base64}`;
+            user.profileImage = `/uploads/${req.file.filename}`;
         }
 
         await user.save();

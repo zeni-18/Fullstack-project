@@ -80,20 +80,23 @@ router.get('/search', async (req, res) => {
 
 router.post('/', protect, upload.single('image'), async (req, res) => {
     try {
+        console.log('Post creation request received');
+        console.log('Body:', req.body);
+        console.log('File:', req.file);
+
         const { caption, tags, location, mediaType } = req.body;
         if (!req.file) {
+            console.log('Upload failed: No file received');
             return res.status(400).json({ message: 'Please upload an image or video' });
         }
 
-        // Convert buffer to Base64 data URL (works on any cloud platform)
-        const base64 = req.file.buffer.toString('base64');
-        const dataUrl = `data:${req.file.mimetype};base64,${base64}`;
+
         const detectedMediaType = req.file.mimetype.startsWith('video/') ? 'video' : 'image';
 
         const post = await Post.create({
             caption,
-            imageUrl: dataUrl,
-            mediaUrl: dataUrl,
+            imageUrl: `/uploads/${req.file.filename}`,
+            mediaUrl: `/uploads/${req.file.filename}`,
             mediaType: mediaType || detectedMediaType,
             author: req.user._id,
             tags: tags ? tags.split(',').map(tag => tag.trim()) : [],
