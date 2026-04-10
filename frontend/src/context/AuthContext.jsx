@@ -1,30 +1,23 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useState, useEffect, useContext, useRef } from 'react';
 import axios from 'axios';
 
 const AuthContext = createContext();
 
 export const useAuth = () => useContext(AuthContext);
 
+// Set baseURL once at module level — stable, never reset on re-render
+// In production: VITE_API_URL=https://your-render-app.onrender.com/api
+// In local dev: falls back to /api (Vite proxy handles it)
+axios.defaults.baseURL = import.meta.env.VITE_API_URL || '/api';
+
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
-
-    // In production: VITE_API_URL=https://your-app.onrender.com/api
-    // In local dev: falls back to /api (Vite proxy handles it)
-    axios.defaults.baseURL = import.meta.env.VITE_API_URL || '/api';
+    // Track initialization to prevent the 401 interceptor from firing logout
+    // before we've even had a chance to load the stored token
+    const isInitialized = useRef(false);
 
     useEffect(() => {
-        // Intercept 401 errors to auto-logout
-        const interceptor = axios.interceptors.response.use(
-            (response) => response,
-            (error) => {
-                if (error.response?.status === 401) {
-                    logout();
-                }
-                return Promise.reject(error);
-            }
-        );
-
         const initAuth = () => {
             try {
                 const storedUser = localStorage.getItem('user');
@@ -40,15 +33,29 @@ export const AuthProvider = ({ children }) => {
                 localStorage.removeItem('user');
                 localStorage.removeItem('token');
             } finally {
+                isInitialized.current = true;
                 setLoading(false);
             }
         };
 
         initAuth();
 
+        // Register 401 interceptor AFTER initAuth so it doesn't
+        // fire logout during the initialization window
+        const interceptor = axios.interceptors.response.use(
+            (response) => response,
+            (error) => {
+                if (error.response?.status === 401 && isInitialized.current) {
+                    logout();
+                }
+                return Promise.reject(error);
+            }
+        );
+
         return () => {
             axios.interceptors.response.eject(interceptor);
         };
+
     }, []);
 
     const login = async (email, password) => {
