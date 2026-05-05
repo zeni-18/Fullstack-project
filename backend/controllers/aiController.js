@@ -41,8 +41,16 @@ const getChatResponse = async (req, res) => {
         const genAI = new GoogleGenerativeAI(apiKey);
         const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
+        let cleanHistory = [];
+        if (history && Array.isArray(history)) {
+            cleanHistory = history.map(msg => ({
+                role: msg.role,
+                parts: msg.parts.map(part => ({ text: part.text }))
+            }));
+        }
+
         const chat = model.startChat({
-            history: history || [],
+            history: cleanHistory,
         });
 
         const result = await chat.sendMessage(message);
